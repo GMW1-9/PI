@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi Digits Generator</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .card {
+            background-color: #1e293b;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: #38bdf8;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background-color: #0f172a;
+            color: #fff;
+            font-size: 1rem;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #0369a1;
+        }
+        #result {
+            margin-top: 1.5rem;
+            background-color: #0f172a;
+            padding: 1rem;
+            border-radius: 6px;
+            word-break: break-all;
+            font-family: monospace;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #334155;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: #f87171;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Pi Digits Generator</h1>
+    <p>Enter how many digits of Pi you want to calculate:</p>
+    
+    <div class="input-group">
+        <input type="number" id="digitsInput" min="0" max="10000" placeholder="e.g., 50" value="50">
+        <button onclick="generatePi()">Generate</button>
+    </div>
+    
+    <div id="errorMsg" class="error"></div>
+    
+    <h3>Result:</h3>
+    <div id="result">Click generate to see Pi!</div>
+</div>
+
+<script>
+    // Using the Chudnovsky algorithm approximation for high precision Pi in JS
+    function computePi(digits) {
+        if (digits <= 0) return "3";
+        
+        // Scale precision
+        const extraDigits = 10;
+        const totalDigits = digits + extraDigits;
+        const LIMIT = Math.ceil(totalDigits / 14) + 1;
+        
+        const DIGITS = totalDigits;
+        const TEN = 10n;
+        const TEN_POWER = TEN ** BigInt(DIGITS);
+        
+        let sum = 0n;
+        const C = 640320n;
+        const C3_24 = (C ** 3n) / 24n;
+        
+        for (let k = 0n; k < BigInt(LIMIT); k++) {
+            const kFactorial = factorial(k);
+            const k6 = factorial(6n * k);
+            const k3 = factorial(3n * k);
+            
+            const num = k6 * (545140134n * k + 13591409n);
+            const den = k3 * (kFactorial ** 3n) * (C3_24 ** k);
+            
+            const term = (k % 2n === 1n) ? -(num / den) : (num / den);
+            sum += term;
+        }
+        
+        const M = 426880n * 10005n;
+        const L = (M * TEN_POWER) / sum;
+        
+        let piStr = L.toString();
+        // Insert decimal point after the first digit
+        piStr = piStr.slice(0, 1) + "." + piStr.slice(1);
+        
+        // Return exact requested digits
+        return piStr.slice(0, digits + 2);
+    }
+
+    function factorial(n) {
+        if (n <= 1n) return 1n;
+        let result = 1n;
+        for (let i = 2n; i <= n; i++) {
+            result *= i;
+        }
+        return result;
+    }
+
+    function generatePi() {
+        const inputVal = document.getElementById("digitsInput").value;
+        const errorDiv = document.getElementById("errorMsg");
+        const resultDiv = document.getElementById("result");
+        
+        errorDiv.textContent = "";
+        
+        const digits = parseInt(inputVal, 10);
+        
+        if (isNaN(digits) || digits < 0) {
+            errorDiv.textContent = "Please enter a valid positive integer.";
+            return;
+        }
+        
+        if (digits > 2000) {
+            errorDiv.textContent = "For browser performance, digits are capped at 2,000.";
+            return;
+        }
+        
+        try {
+            const piValue = computePi(digits);
+            resultDiv.textContent = piValue;
+        } catch (e) {
+            errorDiv.textContent = "An error occurred during calculation.";
+        }
+    }
+    
+    // Initial load
+    generatePi();
+</script>
+
+</body>
+</html>
